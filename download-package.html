@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direkter Download</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+</head>
+<body>
+    <center>
+    <h1 id="state">App Package wird generiert...</h1>
+    </center>
+    <div id="dummy" style="visibility: hidden;"></div>
+    <script>
+        function doWork(txt) {
+            console.log("inserting", txt)
+            txt = txt.substring(txt.indexOf('<table'), txt.indexOf('</table>'));
+            $("#dummy").append($.parseHTML(txt));
+
+            console.log("analyzing")
+            var tableRows = document.getElementsByClassName("tftable")[0].rows;
+
+            var dict = {};
+            for (var i = tableRows.length - 1; i >= 1; i--) {
+                var file = tableRows[i].children[0].children[0];
+                var fileName = file.innerHTML;
+                var fileUrl = file["href"];
+
+                if (!fileName.endsWith(".msixbundle") && !fileName.endsWith(".appxbundle")) continue;
+                fileName = fileName.replace("1875vincentscode.AINotes", "");
+                fileName = fileName.replace("neutral", "");
+                fileName = fileName.replace("appxbundle", "");
+                fileName = fileName.replace("msixbundle", "");
+                fileName = fileName.replace(/\_/g, "");
+                fileName = fileName.replace(/\./g, "");
+                fileName = fileName.substring(0, fileName.indexOf("~"));
+                dict[fileName] = fileUrl;
+            }
+
+            console.log(dict);
+            var max = Object.keys(dict).reduce((a, b) => dict[a] > dict[b] ? a : b);
+            console.log(max, dict[max]);
+
+            $("#state").text("Download hat begonnen.") 
+
+            window.location.href = dict[max];
+        }
+        
+        fetch("https://cors-anywhere.herokuapp.com/https://store.rg-adguard.net/api/GetFiles", {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-DE,en;q=0.9,de-DE;q=0.8,de;q=0.7,en-US;q=0.6",
+                "cache-control": "no-cache",
+                "content-type": "application/x-www-form-urlencoded",
+                "pragma": "no-cache",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-origin"
+            },
+            "referrer": "https://store.rg-adguard.net/",
+            "referrerPolicy": "no-referrer-when-downgrade",
+            "body": "type=url&url=https://www.microsoft.com/de-de/p/ainotes/9ngx8jnlllcj?rtc=1&activetab=pivot:overviewtab&ring=RP&lang=en-DE",
+            "method": "POST",
+            "mode": "cors",
+        }).then((response) => {
+            return response.text();
+        }).then((txt) => {
+            doWork(txt);
+        });
+    </script>
+</body>
+</html>
